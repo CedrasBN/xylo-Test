@@ -2,59 +2,84 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="EDA Dashboard", layout="wide")
+# profiling libraries
+from ydata_profiling import ProfileReport
+from streamlit_pandas_profiling import st_profile_report
+import sweetviz as sv
 
-st.title("Exploratory Data Analysis Dashboard")
+st.set_page_config(page_title="EDA Workshop Dashboard", layout="wide")
 
-# File uploader
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+st.title("EDA Workshop - Streamlit Version")
+
+# equivalent to files.upload()
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
 if uploaded_file is not None:
+
     df = pd.read_csv(uploaded_file)
 
-    # Remove y column if present
-    if 'y' in df.columns:
-        df = df.drop(columns=['y'])
+    # exclude y column
+    if "y" in df.columns:
+        df = df.drop(columns=["y"])
 
-    st.subheader("Dataset Preview")
+    st.header("Dataset Preview")
     st.dataframe(df.head())
 
-    st.subheader("Dataset Shape")
+    st.header("Dataset Info")
     st.write(df.shape)
 
-    st.subheader("Summary Statistics")
+    st.header("Summary Statistics")
     st.dataframe(df.describe())
 
-    st.subheader("Missing Values")
+    st.header("Missing Values")
     st.dataframe(df.isnull().sum())
 
-    # Numeric columns only
-    numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+    # -------------------------
+    # Charts
+    # -------------------------
+    numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns
 
     if len(numeric_cols) > 0:
+
         st.subheader("Bar Chart")
+        bar_col = st.selectbox("Select column for bar chart", numeric_cols)
 
-        col1 = st.selectbox("Select column for bar chart", numeric_cols)
-
-        fig, ax = plt.subplots()
-        df[col1].value_counts().head(20).plot(kind='bar', ax=ax)
-        st.pyplot(fig)
+        fig1, ax1 = plt.subplots()
+        df[bar_col].value_counts().head(20).plot(kind="bar", ax=ax1)
+        st.pyplot(fig1)
 
         st.subheader("Histogram")
-
-        col2 = st.selectbox("Select column for histogram", numeric_cols, key="hist")
+        hist_col = st.selectbox("Select column for histogram", numeric_cols)
 
         fig2, ax2 = plt.subplots()
-        df[col2].hist(ax=ax2)
+        df[hist_col].hist(ax=ax2)
         st.pyplot(fig2)
 
         st.subheader("Line Graph")
-
-        col3 = st.selectbox("Select column for line graph", numeric_cols, key="line")
+        line_col = st.selectbox("Select column for line graph", numeric_cols)
 
         fig3, ax3 = plt.subplots()
-        df[col3].plot(ax=ax3)
+        df[line_col].plot(ax=ax3)
         st.pyplot(fig3)
 
-    else:
-        st.warning("No numeric columns available for plotting.")
+    # -------------------------
+    # YData Profiling
+    # -------------------------
+    st.header("YData Profiling Report")
+
+    profile = ProfileReport(df, explorative=True)
+    st_profile_report(profile)
+
+    # -------------------------
+    # Sweetviz Report
+    # -------------------------
+    st.header("Sweetviz Report")
+
+    report = sv.analyze(df)
+    report_html = "sweetviz_report.html"
+    report.show_html(report_html)
+
+    with open(report_html, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    st.components.v1.html(html, height=800, scrolling=True)
