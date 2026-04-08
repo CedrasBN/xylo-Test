@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import sweetviz as sv
-from ydata_profiling import ProfileReport
 
 st.set_page_config(page_title="EDA App", layout="wide")
 
@@ -30,8 +29,7 @@ if uploaded_file is not None:
 
     # YData Profiling Report
     st.subheader("📑 YData Profiling Report")
-    profile = ProfileReport(df, title="EDA Report", explorative=True)
-    profile.to_file("profile_report.html")
+
 
     with open("profile_report.html", "r", encoding="utf-8") as f:
         st.download_button("Download Profiling Report", f, file_name="EDA_report.html")
